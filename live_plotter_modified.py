@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import filter
+import math
 #let's set up some constants
 #HOST="78.91.80.123"
 PORT = 8000   #arbitrary port not currently in use
@@ -50,10 +51,13 @@ def listen():
 """ globals, parameter_dict -> stores the list for corresponding sensor """
 # data for each sensor
 sensors_data = dict()
-directions = ['x', 'y', 'z']
+#directions = ['x', 'y', 'z']
+directions = ['x']
 period = 500
 time1 = range(0,period)
 # the following function is used to plot data
+def magnitude(x, y, z):
+    return math.sqrt(x**2 + y**2 + z**2)
 def new_plot(sensor, x, y, z):
     cur_time = int(round(time.time() * 1000))
     if sensor not in sensors_data:
@@ -67,46 +71,47 @@ def new_plot(sensor, x, y, z):
             sensors_data[sensor]['time'] = list()
             sensors_data[sensor][direction]['temp_data'] = list()
             sensors_data[sensor][direction]['k_filtering_temp_data'] = list()
-            li, = sensors_data[sensor][direction]['axis'].plot(time1, sensors_data[sensor]['x']['data'], 'r')
+            li, = sensors_data[sensor][direction]['axis'].plot(time1, sensors_data[sensor][direction]['data'], 'r')
             sensors_data[sensor][direction]['list'] = li
             li, = sensors_data[sensor][direction]['axis'].plot(time1, sensors_data[sensor][direction]['k_filtering_data'], 'b')
             sensors_data[sensor][direction]['k_filtering_list'] = li
             sensors_data[sensor][direction]['figure'].canvas.set_window_title(sensor+"_"+direction)
             sensors_data[sensor][direction]['figure'].canvas.draw()
             plt.show(block=False)
-            plt.ylim(-10,10)
+            plt.ylim(-5,5)
     sensors_data[sensor]['time'].append(cur_time)
-    sensors_data[sensor]['x']['temp_data'].append(x)
-    sensors_data[sensor]['y']['temp_data'].append(y)
-    sensors_data[sensor]['z']['temp_data'].append(z)
-    print len(sensors_data[sensor]['x']['data']), len(sensors_data[sensor]['x']['k_filtering_data'])
+    #sensors_data[sensor]['x']['temp_data'].append(magnitude(x,y,z))
+    if sensor == 'ori':
+        sensors_data[sensor]['x']['temp_data'].append(y/36.0)
+    elif sensor == 'lin':
+        sensors_data[sensor]['x']['temp_data'].append(z/2)
+
     if len(sensors_data[sensor]['x']['k_filtering_temp_data'])==0:
         for direction in directions:
             sensors_data[sensor][direction]['k_filtering_temp_data'].append(sensors_data[sensor][direction]['temp_data'][-1])
     else:
         for direction in directions:
             sensors_data[sensor][direction]['k_filtering_temp_data'].append(filter.k_filtering(sensors_data[sensor][direction]['k_filtering_temp_data'][-1], sensors_data[sensor][direction]['temp_data'][-1]))
+
     if len(sensors_data[sensor]['x']['temp_data']) == 10:
         for direction in directions:
             sensors_data[sensor][direction]['data'][:-10] = sensors_data[sensor][direction]['data'][10:]
             sensors_data[sensor][direction]['data'][-10:] = sensors_data[sensor][direction]['temp_data']
             sensors_data[sensor][direction]['list'].set_ydata(sensors_data[sensor][direction]['data'])
+            
             sensors_data[sensor][direction]['k_filtering_data'][:-10] = sensors_data[sensor][direction]['k_filtering_data'][10:]
             sensors_data[sensor][direction]['k_filtering_data'][-10:] = sensors_data[sensor][direction]['k_filtering_temp_data']
             sensors_data[sensor][direction]['k_filtering_list'].set_ydata(sensors_data[sensor][direction]['k_filtering_data'])
-
-            #print len(sensors_data[sensor][direction]['k_filtering_temp_data']), len(sensors_data[sensor][direction]['k_filtering_data']), len(sensors_data[sensor][direction]['data']), len(time1)
-            cur_time = int(round(time.time() * 1000))
-            print "Redrawing " + str(cur_time)
+#            print len(sensors_data[sensor][direction]['k_filtering_temp_data']), len(sensors_data[sensor][direction]['k_filtering_data']), len(sensors_data[sensor][direction]['data']), len(time1)
+            print "redrawn"
             sensors_data[sensor][direction]['figure'].canvas.draw()
             sensors_data[sensor][direction]['temp_data'] = list()
-            sensors_data[sensor][direction]['k_filtering_temp_data'] = list()
+            sensors_data[sensor][direction]['k_filtering_temp_data'] = list() 
 
 
 
-#listen()
-
-# this code was used for offline testing
+listen()
+"""
 
 for i in range(1,1000):
     try:
@@ -114,4 +119,5 @@ for i in range(1,1000):
         time.sleep(0.01)
     except KeyboardInterrupt:
         break
-	
+
+"""

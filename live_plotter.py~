@@ -95,17 +95,16 @@ def new_plot(sensor, x, y, z):
             sensors_data[sensor][direction]['k_filtering_data'][-10:] = sensors_data[sensor][direction]['k_filtering_temp_data']
             sensors_data[sensor][direction]['k_filtering_list'].set_ydata(sensors_data[sensor][direction]['k_filtering_data'])
 
-            #print len(sensors_data[sensor][direction]['k_filtering_temp_data']), len(sensors_data[sensor][direction]['k_filtering_data']), len(sensors_data[sensor][direction]['data']), len(time1)
-            cur_time = int(round(time.time() * 1000))
-            print "Redrawing " + str(cur_time)
+            print len(sensors_data[sensor][direction]['k_filtering_temp_data']), len(sensors_data[sensor][direction]['k_filtering_data']), len(sensors_data[sensor][direction]['data']), len(time1)
             sensors_data[sensor][direction]['figure'].canvas.draw()
             sensors_data[sensor][direction]['temp_data'] = list()
             sensors_data[sensor][direction]['k_filtering_temp_data'] = list()
 
 
 
-#listen()
+listen()
 
+"""
 # this code was used for offline testing
 
 for i in range(1,1000):
@@ -115,3 +114,4 @@ for i in range(1,1000):
     except KeyboardInterrupt:
         break
 	
+"""
