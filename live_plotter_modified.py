@@ -10,7 +10,7 @@ import filter
 import math
 #let's set up some constants
 #HOST="78.91.80.123"
-PORT = 8080   #arbitrary port not currently in use
+PORT = 8081   #arbitrary port not currently in use
 #ADDR = (HOST,PORT)    #we need a tuple for the address
 BUFSIZE = 4096    #reasonably sized buffer for data
 serv=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,12 +28,12 @@ def listen():
         print "Keyboard Interrupt"
         serv.close()
         exit(1)
-    f=open('Exercise1.dat', 'w')
-    lin=np.zeros(6)
+    f=open('Exercise2.dat', 'a')
+    lin=np.zeros(9)
     limit=0
     check=0
-    j=0
-    while j<20 :
+    j=7
+    while j<11 :
         i=0
         print j
         try:
@@ -52,7 +52,6 @@ def listen():
                     continue
                 if readings[0]=="Stop":
                     check=0
-                    print " kjgkjjkgkgjkg"
                     break
                 if check==1:
                     i=i+1
@@ -64,7 +63,11 @@ def listen():
                         lin[3]=float(readings[1])
                         lin[4]=float(readings[2])
                         lin[5]=float(readings[3])
-                        f.write(str(lin[0])+" "+str(lin[1])+" "+str(lin[2])+" "+str(lin[3])+" "+str(lin[4])+" "+str(lin[5])+" "+str(i)+" "+str(j)+"\n")
+                    if readings[0]=="gyr":
+                        lin[6]=float(readings[1])
+                        lin[7]=float(readings[2])
+                        lin[8]=float(readings[3])
+                        f.write(str(lin[0])+" "+str(lin[1])+" "+str(lin[2])+" "+str(lin[3])+" "+str(lin[4])+" "+str(lin[5])+" "+str(lin[6])+" "+str(lin[7])+" "+str(lin[8])+" "+str(i)+" "+str(j)+"\n")
 
             conn.close()
         except KeyboardInterrupt:
