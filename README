@@ -1,2 +1,9 @@
 RUN THE SERVER BY RUNNING liver_plotter.py
 I have extensively used dictionaries in the code to organize different variety of data and to provide structuring
+
+
+### Testing Java Client - Python Server Communication Locally
+To test the java client do the following
+* Compile JavaClient.java using > javac JavaClient.java
+* Execute PythonServer by > python PythonServer.py
+* Execute JavaClient by > java JavaClient
