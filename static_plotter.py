@@ -24,19 +24,18 @@ class Plot(object):
                 self.curves[label] = dict()
                 self.curves[label]["color"] = color
                 self.curves[label]["data"] = y
-                line, = self.axis.plot(self.time, self.curves[label]["data"], self.curves[label]["color"], label = label)
+                line, = self.axis.plot(self.time, self.curves[label]["data"], c = self.curves[label]["color"], label = label)
                 self.lines.append(line)
-                print "plotting"
         
         def show_fig(self):
                 plt.show()
-        def save_fig(self):
-                plt.legend(handles = self.lines)
-                plt.savefig(self.title + "_.png")
+        def save_fig(self, path):
+                #self.figure.legend(handles = self.lines)
+                self.figure.savefig(path +self.title + "_.png")
 
 
 """ sample code for testing """
-plt.show(block=False)
+"""plt.show(block=False)
 time = range(0,1000)
 y = range(0,1000)
 y2 = []
@@ -46,4 +45,4 @@ first = Plot(time, "demo", (-1, 1001))
 first.add_curve(y, 'r', 'demo1')
 first.add_curve(y2, 'b', 'demo2')
 first.save_fig()
-first.show_fig()
+first.show_fig()"""

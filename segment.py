@@ -99,7 +99,7 @@ class ExerciseData(object):
         if myWidth == scaleDownValue:
             newExercise = ExerciseData()
             newExercise = self
-            newExercise.makeRangeBetween()
+            #newExercise.makeRangeBetween()
             return newExercise
         newExercise = ExerciseData()
         stepCount = myWidth/scaleDownValue
@@ -118,7 +118,7 @@ class ExerciseData(object):
             newExercise.timeStamp.append(i)
             i = i+1
 
-        newExercise.makeRangeBetween()
+        #newExercise.makeRangeBetween()
         return newExercise
 
     def makeRangeBetween(self):
@@ -209,9 +209,11 @@ if __name__ == '__main__':
     list_max = +5
     pltAccx = Plot(timeList,"AccX",(-1,1))
     cmap = get_cmap(30)
+    i = 0
     for exercise in trimmedDown:
         # if int(exercise.exNo) in [3,16,17,1,13,2,18]:
         #     continue
+        i = i+1
         print "Key ",exercise.exNo ,len(exercise.accx)
         accxList = exercise.orix
         print "max",max(accxList),"min",min(accxList)
