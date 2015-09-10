@@ -14,4 +14,7 @@ analyser.py : Reads data sets processed them, plots them and create data files o
 		processed data -> processed_data/
 		plots -> data_plots/
 plots tell a lot about what to use as parameters
+Note:	 Data for Accelerometer is integral of Accelerometer readings
+	 data is in the following for in processed_data/
+	 Accelerometer-x,y,z , Ori-x,y,z, Gyro -x,y,z
 -Rahul
