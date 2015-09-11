@@ -10,7 +10,7 @@ directions = ['x', 'y', 'z']
 
 #following parameters can be adjusted 
 const_k = 0.1
-exercise = "Exercise2"		# Exercise to be considered
+exercise = "Exercise1"		# Exercise to be considered
 def get_cmap(N):
         '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
         RGB color.'''
@@ -19,6 +19,11 @@ def get_cmap(N):
         def map_index_to_rgb_color(index):
             return scalar_map.to_rgba(index)
         return map_index_to_rgb_color
+
+def non_zero(number):
+	if number == 0.0:
+		return 0.000001
+
 class ExerciseData(object):
 	"""docstring for ExerciseData"""
 	def __init__(self):
@@ -29,7 +34,6 @@ class ExerciseData(object):
 			self.Ori[direction] = list()
 			self.Acc[direction] = list()
 			self.Gyr[direction] = list()
-
 
 	def append_data(self, data):
 		values = data.split()
@@ -42,6 +46,7 @@ class ExerciseData(object):
 		self.Gyr['x'].append(float(values[6].strip()))
 		self.Gyr['y'].append(float(values[7].strip()))
 		self.Gyr['z'].append(float(values[8].strip()))
+		# Make things non zero if any zero present
 
 
 	def reduce_to(self, value):
@@ -102,27 +107,40 @@ class ExerciseData(object):
 					else:
 						self.Ori[direction][i] = self.Ori[direction][i] +0.5"""
 
+	"""In this function we try to normalize the input data. We take the largest differnece across all directions and normalize using it."""
 	def normalize(self):
+		diff_max = 0
+		for direction in directions:
+			diff = max(self.Acc[direction]) - min(self.Acc[direction])
+			if diff_max < diff:
+				diff_max = diff
 		for direction in directions:
 			mean = float(sum(self.Acc[direction]))/len(self.Acc[direction])
-			mini = min(self.Acc[direction])
-			diff = max(self.Acc[direction]) - min(self.Acc[direction])
 			for i in range(0, len(self.Acc[direction])):
-				self.Acc[direction][i] = (self.Acc[direction][i] - mean)/diff
+				self.Acc[direction][i] = (self.Acc[direction][i] - mean)/diff_max
 			
-			mean = float(sum(self.Gyr[direction]))/len(self.Gyr[direction])
-			mini = min(self.Gyr[direction])
+		diff_max = 0
+		for direction in directions:
 			diff = max(self.Gyr[direction]) - min(self.Gyr[direction])
-			if diff == 0:
-				diff = 1
+			if diff_max < diff:
+				diff_max = diff
+		for direction in directions:
+			mean = float(sum(self.Gyr[direction]))/len(self.Gyr[direction])
+			if diff_max == 0:
+				diff_max = 1
 			for i in range(0, len(self.Gyr[direction])):
-				self.Gyr[direction][i] = (self.Gyr[direction][i] - mean)/diff
+				self.Gyr[direction][i] = (self.Gyr[direction][i] - mean)/diff_max
 
-			mean = float(sum(self.Ori[direction]))/len(self.Ori[direction])
-			mini = min(self.Ori[direction])
+		diff_max = 0
+		for direction in directions:
 			diff = max(self.Ori[direction]) - min(self.Ori[direction])
+			if diff_max < diff:
+				diff_max = diff
+		for direction in directions:
+			# mean = float(sum(self.Ori[direction]))/len(self.Ori[direction])			
 			for i in range(0, len(self.Ori[direction])):
-				self.Ori[direction][i] = (self.Ori[direction][i] - mean)/diff
+				# self.Ori[direction][i] = (self.Ori[direction][i] - mean)/diff_max
+				self.Ori[direction][i] = (self.Ori[direction][i])/diff_max
 
 	def save_data(self, file_name):
 		f = open("processed_datasets/"+exercise +"/"+file_name, "w" )
@@ -167,13 +185,13 @@ if __name__ == '__main__':
 				temp.append(np.trapz(data.Acc[direction][0: (i+1) ]))
 			data.Acc[direction] = temp
 		data.reduce_to(100)
-		data.normalize()
-		data.make_continous()
 		data.filter_data()
+		data.normalize()
+		# data.make_continous()
 		for direction in directions:
 			plt_acc[direction].add_curve(data.Acc[direction], np.random.rand(3,1), str(clr))
-			plt_gyr[direction].add_curve(data.Acc[direction], np.random.rand(3,1), str(clr))
-			plt_ori[direction].add_curve(data.Acc[direction], np.random.rand(3,1),  str(clr))
+			plt_gyr[direction].add_curve(data.Gyr[direction], np.random.rand(3,1), str(clr))
+			plt_ori[direction].add_curve(data.Ori[direction], np.random.rand(3,1),  str(clr))
 		clr = clr + 1
 		data.save_data("data_" + str(clr))
 	
