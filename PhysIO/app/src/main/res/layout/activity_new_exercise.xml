@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.arbitstudios.physio.NewExerciseActivity">
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/exerciseNameField"
+        android:layout_marginTop="106dp"
+        android:hint="New Exercise Name"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Exercise Name :"
+        android:id="@+id/exerciseLabel"
+        android:layout_alignTop="@+id/exerciseNameField"
+        android:layout_toStartOf="@+id/exerciseNameField"
+        android:layout_alignBottom="@+id/exerciseNameField"
+        android:gravity="center_vertical|right" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="No. of Reps. :"
+        android:id="@+id/repsLabel"
+        android:layout_below="@+id/exerciseLabel"
+        android:layout_alignStart="@+id/exerciseLabel"
+        android:layout_marginTop="48dp"
+        android:layout_toStartOf="@+id/exerciseNameField" />
+
+    <Spinner
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/repsSpinner"
+        android:layout_alignTop="@+id/repsLabel"
+        android:layout_toEndOf="@+id/repsLabel"
+        android:gravity="center_vertical|center_horizontal" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Training"
+        android:id="@+id/startTrainingButton"
+        android:layout_marginTop="68dp"
+        android:layout_below="@+id/repsSpinner"
+        android:layout_alignParentEnd="true" />
+</RelativeLayout>
