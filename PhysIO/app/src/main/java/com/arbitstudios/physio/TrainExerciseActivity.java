@@ -19,8 +19,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
@@ -39,8 +41,8 @@ public class TrainExerciseActivity extends ActionBarActivity {
     MediaPlayer winTrack;
     MediaPlayer failTrack;
     // Variables
-    String exerciseName;
-    int reps;
+    String _exerciseName;
+    int _reps;
     int repCount;
     private double _linX, _linY, _linZ;
     private double _gyrX, _gyrY, _gyrZ;
@@ -82,10 +84,10 @@ public class TrainExerciseActivity extends ActionBarActivity {
         setContentView(R.layout.activity_train_exercise);
 
         Intent inputIntent = getIntent();
-        exerciseName = inputIntent.getStringExtra("ExerciseName");
-        reps = inputIntent.getIntExtra("Reps", 3);
+        _exerciseName = inputIntent.getStringExtra("ExerciseName");
+        _reps = inputIntent.getIntExtra("Reps", 3);
         repCount = 0;
-        setTitle(exerciseName);
+        setTitle(_exerciseName);
         createExerciseDirectory();
 
         // Initializing view elements
@@ -124,6 +126,8 @@ public class TrainExerciseActivity extends ActionBarActivity {
                     keep_or_discard(true);
                 } catch (IOException e) {
                     e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -133,6 +137,8 @@ public class TrainExerciseActivity extends ActionBarActivity {
                 try {
                     keep_or_discard(false);
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             }
@@ -152,8 +158,8 @@ public class TrainExerciseActivity extends ActionBarActivity {
     }
 
     private void createExerciseDirectory() {
-//        File dir = getDir(exerciseName, Context.MODE_PRIVATE);
-        _directory = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + File.separator + exerciseName);
+//        File dir = getDir(_exerciseName, Context.MODE_PRIVATE);
+        _directory = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + File.separator + _exerciseName);
         if (!_directory.exists()) {
             _directory.mkdirs();
             Log.d("External Dir", _directory.getAbsolutePath());
@@ -173,6 +179,28 @@ public class TrainExerciseActivity extends ActionBarActivity {
         _foutStream = new ObjectOutputStream(new FileOutputStream(file));
     }
 
+    private void saveFeatures() throws IOException, ClassNotFoundException {
+        File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), _exerciseName + ".txt");
+        if(!file.exists()) {
+            file.createNewFile();
+        }
+        ObjectOutputStream oostream = new ObjectOutputStream(new FileOutputStream(file));
+        for(int i = 1; i <= _reps; i++) {
+            File readingFile = new File(_directory, i + ".txt");
+            FileInputStream fistream = new FileInputStream(readingFile);
+            ObjectInputStream oistream = new ObjectInputStream(fistream);
+            ArrayList<SensorReading> reading = new ArrayList<>();
+            while (fistream.available() > 0) { // Check if the file stream is at the end
+                reading.add((SensorReading)oistream.readObject());
+            }
+            // TODO: Get feature object here
+            Feature feature = new Feature();
+            feature._features = Preprocess.getFeatures(reading);
+            feature._classLabel = Globals._numExercises + 1;
+            oostream.writeObject(feature);
+        }
+
+    }
     private void hide_keep_discard_buttons() {
         _keepButton.setVisibility(View.INVISIBLE);
         _discardButton.setVisibility(View.INVISIBLE);
@@ -181,15 +209,15 @@ public class TrainExerciseActivity extends ActionBarActivity {
         _keepButton.setVisibility(View.VISIBLE);
         _discardButton.setVisibility(View.VISIBLE);
     }
-    private void keep_or_discard(boolean keep) throws IOException {
+    private void keep_or_discard(boolean keep) throws IOException, ClassNotFoundException {
         if(keep) {
             // save the current reading
             _foutStream.flush();
             _foutStream.close();
             upadteRepCount();
-            if(repCount == reps) {
+            if(repCount == _reps) {
                 // Done with the work
-
+                saveFeatures();
             } else {
                 _startButton.setVisibility(View.VISIBLE);
             }
@@ -374,7 +402,7 @@ public class TrainExerciseActivity extends ActionBarActivity {
     }
 
     private void upadteRepCount() {
-        repsRemaining.setText("Number of Reps Remaining : " + (reps - repCount));
+        repsRemaining.setText("Number of Reps Remaining : " + (_reps - repCount));
     }
 
     private SensorEventListener _linearAccelerationListener = new SensorEventListener() {

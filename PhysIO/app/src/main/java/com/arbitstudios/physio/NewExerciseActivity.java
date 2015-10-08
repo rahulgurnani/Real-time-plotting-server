@@ -38,6 +38,7 @@ public class NewExerciseActivity extends ActionBarActivity {
                     Intent trainExerciseIntent = new Intent(NewExerciseActivity.this,TrainExerciseActivity.class);
                     trainExerciseIntent.putExtra("ExerciseName", exerciseNameField.getText().toString().trim());
                     trainExerciseIntent.putExtra("Reps", Integer.parseInt(repsSpinner.getSelectedItem().toString()));
+                    trainExerciseIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     NewExerciseActivity.this.startActivity(trainExerciseIntent);
                 } else {
                     Toast.makeText(getApplicationContext(), "Enter a valid Exercise Name please",

@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Created by Ashutosh on 02/10/2015.
  */
 public class SensorReading implements Serializable {
-    private double _linX, _linY, _linZ;
-    private double _gyrX, _gyrY, _gyrZ;
-    private double _oriX, _oriY, _oriZ;
+    public double _linX, _linY, _linZ;
+    public double _gyrX, _gyrY, _gyrZ;
+    public double _oriX, _oriY, _oriZ;
 
     public SensorReading() {
         _linX = 0.0;

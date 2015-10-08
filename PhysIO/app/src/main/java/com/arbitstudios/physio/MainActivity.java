@@ -20,9 +20,10 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity {
-
+    ArrayList<ExerciseNameAndClass> _exercises;
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +63,7 @@ public class MainActivity extends ActionBarActivity {
         Button exerciseBtn = new Button(this);
         exerciseBtn.setText(exerciseDirectory.getName());
         exerciseBtn.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
-
+        exerciseBtn.setTransformationMethod(null);
         LinearLayout exerciseLayout = (LinearLayout) findViewById(R.id.exercisesLayout);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         exerciseLayout.addView(exerciseBtn,lp);
@@ -78,9 +79,21 @@ public class MainActivity extends ActionBarActivity {
     private void loadExercises() throws InterruptedException {
         File current_dir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
         File[] fileList = current_dir.listFiles();
+        Globals._numExercises = 0;
         for (int i = 0; i < fileList.length; i++) {
-            if(fileList[i].isDirectory()) {
+            if(fileList[i].isFile()) {
+                Globals._numExercises++;
                 Button btn = getExerciseButton(fileList[i]);
+                final String currentExerciseName = fileList[i].getName();
+                btn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent exerciseIntent = new Intent(MainActivity.this,ExerciseActivity.class);
+                        exerciseIntent.putExtra("ExerciseName", currentExerciseName.trim());
+                        exerciseIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        MainActivity.this.startActivity(exerciseIntent);
+                    }
+                });
             }
             Log.d("Files", "FileName:" + fileList[i].getAbsolutePath() + fileList[i].getName());
         }
