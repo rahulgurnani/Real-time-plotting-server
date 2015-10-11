@@ -21,7 +21,7 @@ public class NewExerciseActivity extends ActionBarActivity {
 
         // Initialize the repsSpinner default entries
         repsSpinner = (Spinner) findViewById(R.id.repsSpinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.exercise_reps,
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.train_exercise_reps,
                 android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         repsSpinner.setAdapter(adapter);

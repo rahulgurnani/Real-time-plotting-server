@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
+import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -17,10 +18,12 @@ import android.view.ViewOutlineProvider;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends ActionBarActivity {
     ArrayList<ExerciseNameAndClass> _exercises;
@@ -55,13 +58,19 @@ public class MainActivity extends ActionBarActivity {
 
         try {
             loadExercises();
+            Classifier.readModelfromFile(this);
+            Classifier.printModelLabels();
         } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    private Button getExerciseButton(File exerciseDirectory) {
+    private Button getExerciseButton(String exerciseName) {
         Button exerciseBtn = new Button(this);
-        exerciseBtn.setText(exerciseDirectory.getName());
+        exerciseBtn.setText(exerciseName);
         exerciseBtn.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
         exerciseBtn.setTransformationMethod(null);
         LinearLayout exerciseLayout = (LinearLayout) findViewById(R.id.exercisesLayout);
@@ -76,26 +85,29 @@ public class MainActivity extends ActionBarActivity {
         });
         return exerciseBtn;
     }
-    private void loadExercises() throws InterruptedException {
-        File current_dir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
-        File[] fileList = current_dir.listFiles();
+    private void loadExercises() throws InterruptedException, IOException, ClassNotFoundException {
         Globals._numExercises = 0;
-        for (int i = 0; i < fileList.length; i++) {
-            if(fileList[i].isFile()) {
-                Globals._numExercises++;
-                Button btn = getExerciseButton(fileList[i]);
-                final String currentExerciseName = fileList[i].getName();
-                btn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent exerciseIntent = new Intent(MainActivity.this,ExerciseActivity.class);
-                        exerciseIntent.putExtra("ExerciseName", currentExerciseName.trim());
-                        exerciseIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        MainActivity.this.startActivity(exerciseIntent);
-                    }
-                });
-            }
-            Log.d("Files", "FileName:" + fileList[i].getAbsolutePath() + fileList[i].getName());
+        // Also update global exercise labels map
+        Globals.loadExerciseLabels(this);
+        if (Globals._exerciseLabels == null || Globals._exerciseLabels.isEmpty()) {
+            return;
+        }
+        // Load buttons from the entries in the map
+        for (Map.Entry<String, Integer> entry : Globals._exerciseLabels.entrySet()) {
+            Globals._numExercises++;
+            Button btn = getExerciseButton(entry.getKey());
+            final String currentExerciseName = entry.getKey();
+            final int currentExerciseLabel = entry.getValue();
+            btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent exerciseIntent = new Intent(MainActivity.this,ExerciseActivity.class);
+                    exerciseIntent.putExtra("ExerciseName", currentExerciseName.trim());
+                    exerciseIntent.putExtra("ExerciseLabel", currentExerciseLabel);
+                    exerciseIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    MainActivity.this.startActivity(exerciseIntent);
+                }
+            });
         }
     }
     @Override

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /* Reference taken from
  *  http://simena86.github.io/blog/2013/04/30/logging-accelerometer-from-android-to-pc/
@@ -159,7 +160,9 @@ public class TrainExerciseActivity extends ActionBarActivity {
 
     private void createExerciseDirectory() {
 //        File dir = getDir(_exerciseName, Context.MODE_PRIVATE);
-        _directory = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + File.separator + _exerciseName);
+
+        _directory = new File(getExternalFilesDir(null).getPath() + File.separator + _exerciseName);
+        Log.d("Storage path", getExternalFilesDir(null).getAbsolutePath());
         if (!_directory.exists()) {
             _directory.mkdirs();
             Log.d("External Dir", _directory.getAbsolutePath());
@@ -180,7 +183,7 @@ public class TrainExerciseActivity extends ActionBarActivity {
     }
 
     private void saveFeatures() throws IOException, ClassNotFoundException {
-        File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), _exerciseName + ".txt");
+        File file = new File(getExternalFilesDir(null), _exerciseName + ".txt");
         if(!file.exists()) {
             file.createNewFile();
         }
@@ -194,11 +197,22 @@ public class TrainExerciseActivity extends ActionBarActivity {
                 reading.add((SensorReading)oistream.readObject());
             }
             // TODO: Get feature object here
+            // Create ExerciseData object from the readings
+            ExerciseData exerciseData = new ExerciseData(reading);
             Feature feature = new Feature();
-            feature._features = Preprocess.getFeatures(reading);
+            Log.d("reading_size", reading.size() + "");
+            feature._features = exerciseData.getFeatureVector();
             feature._classLabel = Globals._numExercises + 1;
             oostream.writeObject(feature);
         }
+        if(Globals._exerciseLabels == null) {
+            Globals._exerciseLabels = new HashMap<>();
+        }
+        Globals._exerciseLabels.put(_exerciseName, Globals._numExercises + 1);
+        Globals._numExercises++;
+        Globals.saveExerciseLabels(this);
+
+        Classifier.trainModel(this);
 
     }
     private void hide_keep_discard_buttons() {
@@ -218,6 +232,10 @@ public class TrainExerciseActivity extends ActionBarActivity {
             if(repCount == _reps) {
                 // Done with the work
                 saveFeatures();
+                // Launch MainActivity
+                Intent mainActivityIntent = new Intent(TrainExerciseActivity.this,MainActivity.class);
+                mainActivityIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                TrainExerciseActivity.this.startActivity(mainActivityIntent);
             } else {
                 _startButton.setVisibility(View.VISIBLE);
             }

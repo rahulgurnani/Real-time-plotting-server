@@ -1,111 +1,35 @@
 package com.arbitstudios.physio;
 
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import libsvm.*;
 
-
 public class Classifier {
 
-    private ArrayList<Double> my_data;
-    private int classes;
+    private ArrayList<Double> _my_data = null;
+    private int _classes = -1;
+    public static svm_model _model;
     //Need to define the svm classifier datatype. Don't know how to do that in libsvm
-    public static ArrayList<String> directions=new ArrayList<>(Arrays.asList("X","Y","Z"));
-    public static ArrayList<Double> extract_magnitudes(ArrayList<Double> data, int nsamples)
-    {
-        int size = data.size();
-        ArrayList<Double> samples = new ArrayList<Double>();
-        for (int i=0; i<data.size(); i++)
-        {
-            samples.add(data.get(i*size/nsamples));
-        }
-        return samples;
-    }
-
-    public static ArrayList<Double> extract_gradient(ArrayList<Double> data, int nsamples)
-    {
-        //np.gradient(x) implementation
-        ArrayList<Double> myGradients = new ArrayList<Double>();
-        myGradients.set(0,(data.get(1)-data.get(0)/2));
-        for(int i=1;i<data.size();i++)
-        {
-            if(i==data.size()-1)
-            {
-                myGradients.set(i,(data.get(i)-data.get(i-1))/2);
-            }
-            else
-            {
-                myGradients.set(i,(data.get(i+1)-data.get(i-1))/2);
-            }
-        }
-        //now use this gradient obtained
-        ArrayList<Double> samples = new ArrayList<Double>();
-        for(int i=0;i<nsamples;i++)
-        {
-            samples.add(i,data.get(i*data.size()/nsamples));
-        }
-        return  samples;
-    }
+    public static ArrayList<String> directions = new ArrayList<>(Arrays.asList("X","Y","Z"));
 
     public Classifier()
     {
-        this.my_data = null;
-        this.classes = -1;
+        this._my_data = null;
+        this._classes = -1;
         // How to set linear classifier using libsvm??
     }
 
-    public static double trapz(List<Double> subReadings){
-
-        //simple implementation of numpy.trapz(x) function
-        double height = 1;//default dx = 1
-        double first_last_sum = subReadings.get(0)+subReadings.get(subReadings.size()-1);
-        double second_to_second_last_sum=0;
-        for(int i=1;i<subReadings.size()-1;i++)
-        {
-            second_to_second_last_sum+=subReadings.get(i);
-        }
-        second_to_second_last_sum*=2;
-
-        return height*(first_last_sum+second_to_second_last_sum)/2;
-
-    }
-
-    public static ExerciseData collect_exercise_data(ExerciseData before) {
-        ExerciseData reading=before;
-
-        for(String d:directions)
-        {
-            ArrayList<Double> temp = new ArrayList<Double>();
-            for(int j=0;j<reading.getAcc().size();j++)
-            {
-                temp.add(trapz(reading.getAcc().get(d).subList(0, j)));
-            }
-            reading.getAcc().put(d, temp);
-            temp.clear();
-            for(int j=0;j<reading.getAcc().size();j++)
-            {
-                temp.add(trapz(reading.getAcc().get(d).subList(0,j)));
-            }
-            reading.getAcc().put(d, temp);
-        }
-
-        reading.reduce_to(100);
-        reading.filter_data();
-        reading.normalize();
-
-        return reading;
-    }
-
-    public static svm_model svmTrain(ArrayList<ArrayList<Double>> train)
+    public static void svmTrain(ArrayList<ArrayList<Double>> train)
     {
         svm_problem prob = new svm_problem();
         int dataCount = train.size();
@@ -118,7 +42,7 @@ public class Classifier {
             prob.x[i] = new svm_node[features.size()-1];
             for (int j = 1; j < features.size(); j++){
                 svm_node node = new svm_node();
-                node.index = j;
+                node.index = j-1;
                 node.value = features.get(j);
                 prob.x[i][j-1] = node;
             }
@@ -130,17 +54,15 @@ public class Classifier {
         param.gamma = 0.5;
         param.nu = 0.5;
         param.C = 1;
-        param.svm_type = svm_parameter.C_SVC;
+        param.svm_type = svm_parameter.NU_SVC;
         param.kernel_type = svm_parameter.LINEAR;
         param.cache_size = 20000;
         param.eps = 0.001;
 
-        svm_model model = svm.svm_train(prob, param);
-
-        return model;
+        _model = svm.svm_train(prob, param);
     }
 
-    public static double evaluate(ArrayList<Double> features, svm_model model)
+    public static int evaluate(ArrayList<Double> features)
     {
         svm_node[] nodes = new svm_node[features.size()-1];
         for (int i = 1; i < features.size(); i++)
@@ -152,86 +74,78 @@ public class Classifier {
             nodes[i-1] = node;
         }
 
-        int totalClasses = 2;
-        int[] labels = new int[totalClasses];
-        svm.svm_get_labels(model,labels);
+        int[] labels = new int[Globals._numExercises];
+        double[] probabilities = new double[Globals._numExercises];
+        svm.svm_get_labels(_model, labels);
+        svm.svm_predict_probability(_model, nodes, probabilities);
 
-        double v = svm.svm_predict(model, nodes);
-
-        return v;
+        double max = 0.0;
+        int label = 0;
+        for (int i = 0; i < probabilities.length; i++) {
+            Log.d("Labels and Probabilites", labels[i] + " : " + probabilities[i]);
+            if (max < probabilities[i]) {
+                label = labels[i];
+                max = probabilities[i];
+            }
+        }
+        return label;
     }
 
-    public static ArrayList<Double> get_features_for_classifier(ExerciseData exercise){
-        int nsamples =50;
-        ArrayList<Double> reading= new ArrayList<>();
-
-        for(String d:directions){
-            reading.addAll(extract_magnitudes(exercise.getAcc().get(d), nsamples));
-            reading.addAll(extract_gradient(exercise.getAcc().get(d), nsamples));
-        }
-        for (String d : directions){
-            if(d=="Z")continue;
-            reading.addAll(extract_magnitudes(exercise.getGyr().get(d), nsamples));
-            reading.addAll(extract_gradient(exercise.getGyr().get(d), nsamples));
-        }
-        for (String d : directions){
-            if(d=="Z")continue;
-            reading.addAll(extract_magnitudes(exercise.getOri().get(d), nsamples));
-            reading.addAll(extract_gradient(exercise.getOri().get(d), nsamples));
-        }
-
-        return reading;
-    }
-
-    public static svm_model trainSVM(ArrayList<Feature> features){
-        ArrayList<ArrayList<Double>> train=new ArrayList<ArrayList<Double>>();
-        ArrayList<Double> temp=new ArrayList<>();
-        for(Feature f: features){
+    public static void trainModel(TrainExerciseActivity obj) throws IOException, ClassNotFoundException {
+        ArrayList<Feature> features = Globals.getAllFeatures(obj);
+        ArrayList<ArrayList<Double>> train = new ArrayList<ArrayList<Double>>();
+        ArrayList<Double> temp = new ArrayList<>();
+        for(Feature f: features) {
             temp.clear();
             temp.add((double) f._classLabel);
             temp.addAll(f._features);
             train.add(temp);
         }
-        svm_model model=svmTrain(train);
-
-        return model;
+        svmTrain(train);
+        // Printing labels to check
+        printModelLabels();
+        writeModeltoFile(obj);
     }
+    public static void printModelLabels() {
+        int[] labels = _model.label;
+        for (int i = 0; i < labels.length; i++) {
+            Log.d("Training Labels", labels[i] + "");
+        }
+        int totalclasses = svm.svm_get_nr_class(_model);
+        Log.d("Total Classes", totalclasses + "");
+        labels = new int[totalclasses];
+        svm.svm_get_labels(_model, labels);
 
-    public static void writeModeltoFile(svm_model model){
+        for (int i = 0; i < labels.length; i++) {
+            Log.d("Training Labels", labels[i] + "");
+        }
+        Log.d("Model Type", svm.svm_get_svm_type(_model) + "");
+    }
+    public static void writeModeltoFile(TrainExerciseActivity obj) {
         //Write SVM Model
-        SVMmodel M = new SVMmodel(model);
 
-        File sdcard = Environment.getExternalStorageDirectory();
-        File ModelFile = new File(sdcard,"Model.txt");
-        try{
-
+        File sdcard = obj.getExternalFilesDir(null);
+        File ModelFile = new File(sdcard,Globals.MODEL_FILE_NAME);
+        try {
             FileOutputStream fout = new FileOutputStream(ModelFile);
             ObjectOutputStream oos = new ObjectOutputStream(fout);
-            oos.writeObject(M);
+            oos.writeObject(_model);
             oos.close();
-
-        }catch(Exception ex){
+        } catch(Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    public static svm_model readModelfromFile(){
-        SVMmodel M;
-
-        File sdcard = Environment.getExternalStorageDirectory();
-        File ModelFile = new File(sdcard,"Model.txt");
-        try{
-
+    public static void readModelfromFile(MainActivity obj) {
+        File sdcard = obj.getExternalFilesDir(null);
+        File ModelFile = new File(sdcard,Globals.MODEL_FILE_NAME);
+        try {
             FileInputStream fin = new FileInputStream(ModelFile);
             ObjectInputStream ois = new ObjectInputStream(fin);
-            M = (SVMmodel) ois.readObject();
+            _model = (svm_model) ois.readObject();
             ois.close();
-
-            return M.model;
-
-        }catch(Exception ex){
+        } catch(Exception ex) {
             ex.printStackTrace();
-            return null;
         }
     }
 
