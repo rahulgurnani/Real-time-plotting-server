@@ -97,11 +97,11 @@ public class TrainExerciseActivity extends ActionBarActivity {
         _keepButton = (ImageButton) findViewById(R.id.keepButton);
         _discardButton = (ImageButton) findViewById(R.id.discardButton);
         hide_keep_discard_buttons();
+
         // Initializing media files
         countdownTrack = MediaPlayer.create(getApplicationContext(), R.raw.countdown);
         winTrack = MediaPlayer.create(getApplicationContext(), R.raw.win);
         failTrack = MediaPlayer.create(getApplicationContext(), R.raw.fail);
-
         countdownTrack.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -161,7 +161,7 @@ public class TrainExerciseActivity extends ActionBarActivity {
     private void createExerciseDirectory() {
 //        File dir = getDir(_exerciseName, Context.MODE_PRIVATE);
 
-        _directory = new File(getExternalFilesDir(null).getPath() + File.separator + _exerciseName);
+        _directory = new File(getExternalFilesDir(null).getAbsolutePath() + File.separator + _exerciseName);
         Log.d("Storage path", getExternalFilesDir(null).getAbsolutePath());
         if (!_directory.exists()) {
             _directory.mkdirs();

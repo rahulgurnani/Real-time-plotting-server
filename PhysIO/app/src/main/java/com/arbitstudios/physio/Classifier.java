@@ -1,6 +1,7 @@
 package com.arbitstudios.physio;
 
 import android.os.Environment;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
 import java.io.File;
@@ -11,6 +12,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 import libsvm.*;
 
@@ -62,7 +68,7 @@ public class Classifier {
         _model = svm.svm_train(prob, param);
     }
 
-    public static int evaluate(ArrayList<Double> features)
+    public static LabelAndProbability evaluate(ArrayList<Double> features)
     {
         svm_node[] nodes = new svm_node[features.size()-1];
         for (int i = 1; i < features.size(); i++)
@@ -75,37 +81,96 @@ public class Classifier {
         }
 
         int[] labels = new int[Globals._numExercises];
-        double[] probabilities = new double[Globals._numExercises];
+        int n = Globals._numExercises;
+        Log.d("Number of Exercises", "" + n);
+        double[] values = new double[(n*(n-1)/2)];
         svm.svm_get_labels(_model, labels);
-        svm.svm_predict_probability(_model, nodes, probabilities);
-
-        double max = 0.0;
-        int label = 0;
-        for (int i = 0; i < probabilities.length; i++) {
-            Log.d("Labels and Probabilites", labels[i] + " : " + probabilities[i]);
-            if (max < probabilities[i]) {
-                label = labels[i];
-                max = probabilities[i];
-            }
+        for(int i = 0; i < n; i++) {
+            Log.d("labels", "" + labels[i]);
         }
-        return label;
+        int Label = (int)svm.svm_predict_values(_model, nodes, values);
+        double accuracy = 0.0;
+        int votes = 0;
+        int p = 0;
+        for(int i=0;i<n;i++)
+            for(int j=i+1;j<n;j++) {
+                if(Label == labels[i]) {
+                    accuracy += values[p];
+                    if(values[p] > 0)
+                        votes++;
+                } else if(Label == labels[j]) {
+                    accuracy -= values[p];
+                    if(values[p] < 0)
+                        votes++;
+                }
+                p++;
+            }
+
+//        int label = 0;
+//        for (int i = 0; i < probabilities.length; i++) {
+//            Log.d("Labels and Probabilites", labels[i] + " : " + probabilities[i]);
+//            if (max < probabilities[i]) {
+//                label = labels[i];
+//                max = probabilities[i];
+//            }
+//        }
+//        return new LabelAndProbability(Label, (accuracy/n));
+        return new LabelAndProbability(Label, votes);
     }
 
-    public static void trainModel(TrainExerciseActivity obj) throws IOException, ClassNotFoundException {
+    public static void trainModel(ActionBarActivity obj) throws IOException, ClassNotFoundException {
         ArrayList<Feature> features = Globals.getAllFeatures(obj);
         ArrayList<ArrayList<Double>> train = new ArrayList<ArrayList<Double>>();
-        ArrayList<Double> temp = new ArrayList<>();
+        ArrayList<Double> temp;
         for(Feature f: features) {
-            temp.clear();
+            temp =  new ArrayList<>();
             temp.add((double) f._classLabel);
             temp.addAll(f._features);
             train.add(temp);
         }
+        for(Feature f: features) {
+            temp =  new ArrayList<>();
+            temp.add((double) f._classLabel);
+            temp.addAll(f._features);
+            train.add(temp);
+        }
+        for(Feature f: features) {
+            temp =  new ArrayList<>();
+            temp.add((double) f._classLabel);
+            temp.addAll(f._features);
+            train.add(temp);
+        }
+        for(Feature f: features) {
+            temp =  new ArrayList<>();
+            temp.add((double) f._classLabel);
+            temp.addAll(f._features);
+            train.add(temp);
+        }
+        long seed = System.nanoTime();
+        Collections.shuffle(train, new Random(seed));
         svmTrain(train);
         // Printing labels to check
         printModelLabels();
         writeModeltoFile(obj);
     }
+    public static void reTrainModel(MainActivity obj) throws IOException, ClassNotFoundException {
+        ArrayList<Feature> features = Globals.getAllFeatures(obj);
+        ArrayList<ArrayList<Double>> train = new ArrayList<ArrayList<Double>>();
+        ArrayList<Double> temp;
+        for(Feature f: features) {
+            temp =  new ArrayList<>();
+            temp.add((double) f._classLabel);
+            temp.addAll(f._features);
+            train.add(temp);
+        }
+        long seed = System.nanoTime();
+        Collections.shuffle(train, new Random(seed));
+        svmTrain(train);
+        // Printing labels to check
+        printModelLabels();
+        writeModeltoFile(obj);
+    }
+
     public static void printModelLabels() {
         int[] labels = _model.label;
         for (int i = 0; i < labels.length; i++) {
@@ -121,7 +186,8 @@ public class Classifier {
         }
         Log.d("Model Type", svm.svm_get_svm_type(_model) + "");
     }
-    public static void writeModeltoFile(TrainExerciseActivity obj) {
+
+    public static void writeModeltoFile(ActionBarActivity obj) {
         //Write SVM Model
 
         File sdcard = obj.getExternalFilesDir(null);

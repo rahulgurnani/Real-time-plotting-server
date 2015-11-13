@@ -161,7 +161,7 @@ public class ExerciseData {
         double startingAzimuth = azimuth.get(0);
         // Azimuth varies from 0 to 360
         for (int i = 0; i < azimuth.size(); i++) {
-            azimuth.set(i, mod360(azimuth.get(i) - startingAzimuth));
+            azimuth.set(i, (mod360(azimuth.get(i) - startingAzimuth)/180.0));
         }
     }
 

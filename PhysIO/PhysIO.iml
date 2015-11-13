@@ -16,5 +16,4 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
-  <option name="APK_PATH" value="/build/outputs/apk/PhysIO-debug-unaligned.apk"/>
 </module>

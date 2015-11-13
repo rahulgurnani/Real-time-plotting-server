@@ -26,12 +26,11 @@
             android:label="@string/title_activity_train_exercise" >
         </activity>
 
-        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
         <activity
             android:name=".ExerciseActivity"
             android:label="@string/title_activity_exercise" >
         </activity>
     </application>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
 </manifest>

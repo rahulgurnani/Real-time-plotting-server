@@ -19,6 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
@@ -123,11 +124,18 @@ public class ExerciseActivity extends ActionBarActivity {
         // MediaFile on complete listeners
 
         // Start button on click listener
+        countdownTrack.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                startExercise();
+            }
+        });
         _startExerciseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                hideButtonAndSpinner();
-                startExercise();
+                countdownTrack.start();
+                _startExerciseBtn.setVisibility(View.INVISIBLE);
+                //TODO: start animation
             }
         });
 
@@ -153,22 +161,27 @@ public class ExerciseActivity extends ActionBarActivity {
     private void startExercise() {
         _repCount = 0;
         upadteRepCount();
-        while(_repCount < _reps) {
-            countdownTrack.start();
-            _reading.clear();
-            record();
-            ExerciseData test = new ExerciseData(_reading);
-            int label = Classifier.evaluate(test.getFeatureVector());
-            if (label == _exerciseLabel) {
-                // WIN
-                winTrack.start();
-                _repCount++;
-            } else {
-                // FAIL
-                failTrack.start();
-            }
+        _reading.clear();
+        record();
+        ExerciseData test = new ExerciseData(_reading);
+        LabelAndProbability result = Classifier.evaluate(test.getFeatureVector());
+        int label = result._label;
+        if (label == _exerciseLabel) {
+            // WIN
+            winTrack.start();
+            Toast.makeText(this, "Exercise = " + label + " Probability = " + result._probability, Toast.LENGTH_LONG).show();
+            _repCount++;
+        } else {
+            // FAIL
+            Toast.makeText(this, "Exercise = " + label + " Probability = " + result._probability, Toast.LENGTH_LONG).show();
+            failTrack.start();
         }
-        showButtonAndSpinner();
+
+        if (_repCount == _reps) {
+            showButtonAndSpinner();
+        } else {
+            _startExerciseBtn.setVisibility(View.VISIBLE);
+        }
     }
 
     private void hideButtonAndSpinner() {

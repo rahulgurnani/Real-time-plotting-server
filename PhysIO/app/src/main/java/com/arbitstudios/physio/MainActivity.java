@@ -18,6 +18,7 @@ import android.view.ViewOutlineProvider;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.util.Map;
 
 public class MainActivity extends ActionBarActivity {
     ArrayList<ExerciseNameAndClass> _exercises;
+    Button _trainBtn;
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +58,22 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+        _trainBtn = (Button)findViewById(R.id.train_btn);
+        _trainBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disableTrainBtn();
+                try {
+                    reTrainModel();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                enableTrainBtn();
+                Log.d("ReTraning","Done");
+            }
+        });
         try {
             loadExercises();
             Classifier.readModelfromFile(this);
@@ -68,6 +86,17 @@ public class MainActivity extends ActionBarActivity {
             e.printStackTrace();
         }
     }
+    private void disableTrainBtn() {
+        Toast.makeText(this,"The fuck is happening",Toast.LENGTH_LONG).show();
+        _trainBtn.setVisibility(View.INVISIBLE);
+    }
+    private void enableTrainBtn() {
+        _trainBtn.setVisibility(View.VISIBLE);
+    }
+    private void reTrainModel() throws IOException, ClassNotFoundException {
+        Classifier.trainModel(this);
+    }
+
     private Button getExerciseButton(String exerciseName) {
         Button exerciseBtn = new Button(this);
         exerciseBtn.setText(exerciseName);

@@ -1,6 +1,7 @@
 package com.arbitstudios.physio;
 
 import android.os.Environment;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
 import java.io.File;
@@ -62,7 +63,7 @@ public class Globals {
 //        }
         return featuresFromFile;
     }
-    public static ArrayList<Feature> getAllFeatures(TrainExerciseActivity obj) throws IOException, ClassNotFoundException {
+    public static ArrayList<Feature> getAllFeatures(ActionBarActivity obj) throws IOException, ClassNotFoundException {
         File currentDir = obj.getExternalFilesDir(null);
         File[] fileList = currentDir.listFiles();
         ArrayList<Feature> allFeatures = new ArrayList<>();
@@ -79,4 +80,5 @@ public class Globals {
         }
         return allFeatures;
     }
+
 }
