@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
 import libsvm.*;
 
 public class Classifier {
@@ -27,7 +26,6 @@ public class Classifier {
     public static svm_model _model;
     //Need to define the svm classifier datatype. Don't know how to do that in libsvm
     public static ArrayList<String> directions = new ArrayList<>(Arrays.asList("X","Y","Z"));
-
     public Classifier()
     {
         this._my_data = null;
@@ -105,6 +103,7 @@ public class Classifier {
                 }
                 p++;
             }
+
 
 //        int label = 0;
 //        for (int i = 0; i < probabilities.length; i++) {

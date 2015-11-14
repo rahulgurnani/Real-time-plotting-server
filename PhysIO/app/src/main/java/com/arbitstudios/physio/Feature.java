@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class Feature implements Serializable{
 
     public int _classLabel;
+    public int _time;
     public ArrayList<Double> _features;
     public Feature() {
         _features = new ArrayList<>();

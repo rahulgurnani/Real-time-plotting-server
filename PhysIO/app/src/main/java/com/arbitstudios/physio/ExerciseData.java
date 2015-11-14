@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class ExerciseData {
     public static final int N_SAMPLES = 50;
+    private int _time;
     // Array of arraylists for linear acceleration, gyrometer readings and orientation sensor readings
     private ArrayList<ArrayList<Double>> _lins;
     private ArrayList<ArrayList<Double>> _gyrs;
@@ -29,6 +30,7 @@ public class ExerciseData {
     }
     public ExerciseData(ArrayList<SensorReading> readings) {
         this();
+        _time = readings.size();
         for (SensorReading reading : readings) {
             this.append_data(reading);
         }
@@ -209,5 +211,8 @@ public class ExerciseData {
             featureVector.addAll(_gradientOris.get(i));
         }
         return featureVector;
+    }
+    public int getTime() {
+        return _time;
     }
 }

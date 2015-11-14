@@ -49,6 +49,12 @@ public class Globals {
         oout.writeObject(_exerciseLabels);
         oout.close();
     }
+
+    public static ArrayList<Feature> getAllExerciseFeatures(ActionBarActivity obj, String exerciseName) throws IOException, ClassNotFoundException {
+        File file = new File(obj.getExternalFilesDir(null), exerciseName + ".txt");
+        return getFeaturesFromFile(file);
+    }
+
     private static ArrayList<Feature> getFeaturesFromFile(File file) throws IOException, ClassNotFoundException {
         ArrayList<Feature> featuresFromFile = new ArrayList<>();
         FileInputStream fis = new FileInputStream(file);

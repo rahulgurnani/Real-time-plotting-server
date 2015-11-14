@@ -202,6 +202,7 @@ public class TrainExerciseActivity extends ActionBarActivity {
             Feature feature = new Feature();
             Log.d("reading_size", reading.size() + "");
             feature._features = exerciseData.getFeatureVector();
+            feature._time = exerciseData.getTime();
             feature._classLabel = Globals._numExercises + 1;
             oostream.writeObject(feature);
         }

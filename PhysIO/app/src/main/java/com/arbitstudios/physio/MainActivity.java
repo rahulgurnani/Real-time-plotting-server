@@ -5,9 +5,7 @@ import android.content.Intent;
 import android.graphics.Outline;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
-import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -20,10 +18,8 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends ActionBarActivity {

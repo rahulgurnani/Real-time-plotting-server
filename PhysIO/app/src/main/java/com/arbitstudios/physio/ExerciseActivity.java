@@ -20,11 +20,13 @@ import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import org.w3c.dom.Text;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Map;
 
 import libsvm.svm_model;
 
@@ -34,9 +36,10 @@ public class ExerciseActivity extends ActionBarActivity {
     int _repCount;
     int _reps;
 
-    TextView _repsRemainingLabel;
-    Spinner _repsSpinner;
-    TextView _repsLabel;
+//    TextView _repsRemainingLabel;
+    TextView _timeText;
+//    Spinner _repsSpinner;
+//    TextView _repsLabel;
     ImageButton _startExerciseBtn;
 
     // Media elements
@@ -49,6 +52,8 @@ public class ExerciseActivity extends ActionBarActivity {
     private double _oriX, _oriY, _oriZ;
     private double meanx=-1,meany=-1,meanz=-1;
     private double devx=-1,devy=-1,devz=-1;
+    private int threshold = 5000;
+    private double minimum_similarity=0.0;
 
     ArrayList<Double> magLinXList = new ArrayList<Double>(210);
     ArrayList<Double> magLinYList = new ArrayList<Double>(210);
@@ -89,20 +94,20 @@ public class ExerciseActivity extends ActionBarActivity {
         setTitle(_exerciseName + " " + _exerciseLabel);
 
         // Initialize view elements
-        _repsLabel = (TextView) findViewById(R.id.exercise_reps_label);
-        _repsSpinner = (Spinner) findViewById(R.id.exercise_reps_spinner);
-        _repsRemainingLabel = (TextView) findViewById(R.id.reps_remaining_label);
+//        _repsLabel = (TextView) findViewById(R.id.exercise_reps_label);
+//        _repsSpinner = (Spinner) findViewById(R.id.exercise_reps_spinner);
+//        _repsRemainingLabel = (TextView) findViewById(R.id.reps_remaining_label);
         _startExerciseBtn = (ImageButton) findViewById(R.id.start_exercise_btn);
-
+        _timeText = (TextView) findViewById(R.id.timeText);
         // Initialize the _repsSpinner default entries
-        _repsSpinner = (Spinner) findViewById(R.id.exercise_reps_spinner);
+//        _repsSpinner = (Spinner) findViewById(R.id.exercise_reps_spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.exercise_reps,
                 android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        _repsSpinner.setAdapter(adapter);
+//       _repsSpinner.setAdapter(adapter);
 
         // Initialize UI
-        showButtonAndSpinner();
+//        showButtonAndSpinner();
 
         // Initialize the Sensors
         _sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -127,12 +132,21 @@ public class ExerciseActivity extends ActionBarActivity {
         countdownTrack.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                startExercise();
+                try {
+                    Log.d("StartingEx", "StartingEX");
+                    startExercise();
+                    Log.d("StopEx", "StopEX");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         });
         _startExerciseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                _timeText.setText("");
                 countdownTrack.start();
                 _startExerciseBtn.setVisibility(View.INVISIBLE);
                 //TODO: start animation
@@ -140,7 +154,7 @@ public class ExerciseActivity extends ActionBarActivity {
         });
 
         // Spinner onchange listener
-        _repsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        /*_repsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 _reps = Integer.parseInt(_repsSpinner.getSelectedItem().toString());
@@ -150,41 +164,103 @@ public class ExerciseActivity extends ActionBarActivity {
             public void onNothingSelected(AdapterView<?> parent) {
                 _reps = 0;
             }
-        });
+        });*/
 
     }
 
-    private void upadteRepCount() {
-        _repsRemainingLabel.setText("Number of Reps Remaining : " + (_reps - _repCount));
+    private void updateRepCount() {
+//        _repsRemainingLabel.setText("Number of Reps Remaining : " + (_reps - _repCount));
     }
 
-    private void startExercise() {
+    private double DTWDistance(ArrayList<Double> p, ArrayList<Double> a) {
+        double[][] DTW = new double[p.size()][a.size()];
+
+        for (int i =0;i<p.size();i++)
+        {
+            DTW[i][0]=Double.MAX_VALUE;
+        }
+        for (int i =0;i<a.size();i++)
+        {
+            DTW[0][i]=Double.MAX_VALUE;
+        }
+        DTW[0][0]=0;
+
+        for(int i=1;i<p.size();i++)
+        {
+            for(int j=1;j<a.size();j++)
+            {
+                double cost=Math.abs(p.get(i)-a.get(j));
+                DTW[i][j]=cost+Math.min(DTW[i-1][j], Math.min(DTW[i][j-1], DTW[i-1][j-1]));
+            }
+        }
+        return DTW[p.size()-1][a.size()-1];
+    }
+
+    private boolean checkClassification(ArrayList<ArrayList<Double>> p_list, ArrayList<Double> a_list, int predicted, int actual){
+        double mean=0.0;
+        minimum_similarity=0.0;
+        for(int i=0;i<p_list.size();i++){
+            double dist=DTWDistance(p_list.get(i), a_list);
+            minimum_similarity+=dist;
+            Log.d("DTWDistance", "DTWDistance for tuple "+i+" ;is " + dist);
+        }
+        minimum_similarity/=p_list.size();
+        if(minimum_similarity<threshold)return true;
+        else return false;
+    }
+
+    private void startExercise() throws IOException, ClassNotFoundException {
         _repCount = 0;
-        upadteRepCount();
+        updateRepCount();
         _reading.clear();
         record();
         ExerciseData test = new ExerciseData(_reading);
-        LabelAndProbability result = Classifier.evaluate(test.getFeatureVector());
+        int time = test.getTime();
+        int mean_time=0;
+        Log.d("StartingEx", "FeatVect");
+        ArrayList<Double> feature_test = test.getFeatureVector();
+
+        ArrayList<ArrayList<Double>> feature_tocompare = new ArrayList<ArrayList<Double>>();
+        ArrayList<Feature> trained_features;
+        // We want exercise name
+
+        trained_features = Globals.getAllExerciseFeatures(this, _exerciseName);
+
+        Log.d("StartingEx", "Class");
+        LabelAndProbability result = Classifier.evaluate(feature_test);
+
+        for (Feature f:trained_features){
+//                Log.d("StartingEX", "Features "+f._features.size());
+            mean_time+=f._time;
+            feature_tocompare.add(f._features);
+        }
+
+        mean_time/=trained_features.size();
+        Log.d("TimeDebug", "Mean Time :"+mean_time+" Test Time:"+time);
         int label = result._label;
-        if (label == _exerciseLabel) {
+        if ((time>=0.6*mean_time && time <=1.4*mean_time) && label==_exerciseLabel && checkClassification(feature_tocompare, feature_test, label, _exerciseLabel)) {
             // WIN
             winTrack.start();
-            Toast.makeText(this, "Exercise = " + label + " Probability = " + result._probability, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Exercise = " + label + " Similarity = " + minimum_similarity, Toast.LENGTH_LONG).show();
             _repCount++;
-        } else {
-            // FAIL
-            Toast.makeText(this, "Exercise = " + label + " Probability = " + result._probability, Toast.LENGTH_LONG).show();
+        } else if (time < 0.6*mean_time) {
+            _timeText.setBackgroundColor(View.ACCESSIBILITY_LIVE_REGION_ASSERTIVE);
+            _timeText.setText("Too Fast");
             failTrack.start();
+        } else if (time > 1.4*mean_time) {
+            _timeText.setBackgroundColor(View.ACCESSIBILITY_LIVE_REGION_ASSERTIVE);
+            _timeText.setText("Too Slow");
+            failTrack.start();
+        } else {
+                // FAIL
+                Toast.makeText(this, "Exercise = " + label + " Similarity = " + minimum_similarity, Toast.LENGTH_LONG).show();
+                failTrack.start();
         }
 
-        if (_repCount == _reps) {
-            showButtonAndSpinner();
-        } else {
-            _startExerciseBtn.setVisibility(View.VISIBLE);
-        }
+        _startExerciseBtn.setVisibility(View.VISIBLE);
     }
 
-    private void hideButtonAndSpinner() {
+    /*private void hideButtonAndSpinner() {
         // Function to be called at the start of the exercise
         // Hide start button and spinner
         _repsSpinner.setVisibility(View.INVISIBLE);
@@ -203,7 +279,7 @@ public class ExerciseActivity extends ActionBarActivity {
 
         // Show reps remaining label
         _repsRemainingLabel.setVisibility(View.INVISIBLE);
-    }
+    }*/
 
     private void removeReading() {
         linXList.remove(0);
